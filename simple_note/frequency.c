@@ -83,11 +83,11 @@ double read_note(char* str)
 			str++;
 			return note_format(str);
 		case 's': //The major scale format is an s followed by an alphanumeric note (see note_format()) followed by 
-		case 'S': //an octave followed by a major scale offset [0-7]
+		case 'S': //an octave followed by a major scale offset [0-6]
 			str++;
 			return major_scale_format(str);
 		case 't': //The minor scale format is an t followed by an alphanumeric note (see note_format()) followed by 
-		case 'T': //an octave followed by a major scale offset [0-7]
+		case 'T': //an octave followed by a major scale offset [0-6]
 			str++;
 			return minor_scale_format(str);
 /*
@@ -151,8 +151,6 @@ double major_scale_format(char* str)
 		case '5':
 			return keyfreq*pow(semitone_ratio,9);
 		case '6':
-			return keyfreq*pow(semitone_ratio,11);
-		case '7':
 			return keyfreq*pow(semitone_ratio,11);
 		case '0':
 		default:
