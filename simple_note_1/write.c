@@ -1,7 +1,7 @@
 #include <math.h>
 #include "file_read.h"
 #include "instruments.h"
-
+//TODO: Block based io will probably be faster rather than one write per sample
 int main(int argc, char** argv)
 {
 	FILE* in_fp = fopen(argv[1],"r");

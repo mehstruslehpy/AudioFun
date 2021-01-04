@@ -5,6 +5,9 @@
 #include <string.h>
 #include <math.h>
 #define NDEBUG
+//TODO: add extra formats
+//TODO: document all formats
+//TODO: clean up code so it's not just a pile of switch statements.
 double read_note(char* str);
 double frequency_format(char* str);
 double midi_format(char* str);

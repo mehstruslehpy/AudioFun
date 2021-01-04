@@ -5,6 +5,8 @@
 #include <string.h>
 #include "types.h"
 #define NDEBUG
+//TODO: Add more time formats
+//TODO: Document all time formats
 double read_time(char* str,Format fmt);
 double second_format(char* str,int sample_rate);
 double beats_format(char* str,int sample_rate);

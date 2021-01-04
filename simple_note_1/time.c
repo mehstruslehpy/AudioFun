@@ -33,16 +33,10 @@ double beats_format(char* str,int sample_rate)
 }
 double extended_time_format(char* str,int sample_rate)
 {
-	//printf("DEBUG: str=%s\n",str);
 	char* bpm = strtok(str,"_");
-	//printf("DEBUG: bpm=%s\n",bpm);
 	char* beats = strtok(NULL,"_");
-	//printf("DEBUG: beats=%s\n",beats);
 	char* fraction = strtok(NULL,"_");
-	//printf("DEBUG: fraction=%s\n",fraction);
 	char* numerator = strtok(fraction,"/");
-	//printf("DEBUG: numerator=%s\n",numerator);
 	char* denominator = strtok(NULL,"/");
-	//printf("DEBUG: denominator=%s\n\n",denominator);
 	return (atof(beats)+atof(numerator)/atof(denominator))*(60/atof(bpm))*(sample_rate);
 }

@@ -11,7 +11,7 @@
 #include "time.h"
 #include "frequency.h"
 #define NDEBUG
-
+//TODO: Add commenting and whitespace skipping functionality
 void print_noteline(char* start_msg,Noteline* n,char* end_msg);
 //count lines in file
 int lines_per_file(FILE* fp);
@@ -21,5 +21,4 @@ Format read_format(FILE* fp);
 Noteline read_noteline(FILE* fp,Format fmt);
 int is_comment(char* str);
 int is_empty(char* str);
-
 #endif
