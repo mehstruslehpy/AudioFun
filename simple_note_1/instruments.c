@@ -27,3 +27,12 @@ double saw_gen(double x,double rate)
 	while (x<0) x=x+1;
 	return 2*x-1;
 }
+double noise_gen(double x,double rate)
+{
+	int max = 2;
+	//select a random value between 0 and 2
+	double y = (double)rand()/(double)(RAND_MAX/max);
+	//shift to between -1 and 1
+	y=y-1;
+	return y;
+}

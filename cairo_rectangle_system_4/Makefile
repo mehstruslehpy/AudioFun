@@ -1,10 +1,11 @@
-FILES := cairo-hello stroke fill showtext paint mask setsourcergba setsourcegradient path-close textextents diagram draw tips-ellipse-1 tips-letter tips-font
+FILES := cairo-rectangles
 CC := gcc
 CFLAGS := -g -Wall -pedantic -I /usr/include/cairo -c
 LFLAGS := -g -Wall -pedantic 
 
 main: $(FILES)
 	@echo "Building done"
+	xviewer cairo-rectangles.png
 
 $(FILES):$@
 	@echo "Compiling: " $@
@@ -15,4 +16,4 @@ $(FILES):$@
 	./$@
 
 clean:
-	rm $(FILES) *.o *.png *.svg
+	rm $(FILES) *.o *.png 

@@ -2,6 +2,9 @@
 #include "file_read.h"
 #include "instruments.h"
 //TODO: Block based io will probably be faster rather than one write per sample
+//TODO: Add stereo/mono modes
+//TODO: Add ADSR using breakpoint files
+//TODO: Add some basic block/clip programs average two files, pad a file/change file length etc.
 int main(int argc, char** argv)
 {
 	FILE* in_fp = fopen(argv[1],"r");
@@ -12,6 +15,11 @@ int main(int argc, char** argv)
 	else if (strcmp(argv[3],"SQUARE")==0) instr_ptr=&square_gen;
 	else if (strcmp(argv[3],"TRIANGLE")==0) instr_ptr=&triangle_gen;
 	else if (strcmp(argv[3],"SINE")==0) instr_ptr=&sine_gen;
+	else if (strcmp(argv[3],"NOISE")==0)
+	{
+		srand(time(NULL));
+		instr_ptr=&noise_gen;
+	}
 	else instr_ptr=&sine_gen;
 
 	printf("instrument=%s\n",argv[3]);
@@ -22,7 +30,7 @@ int main(int argc, char** argv)
 	Format fmt = read_format(in_fp);
 	printf("infile-lines=%d\n",lines);
 	printf("SAMPLE_RATE=%d\n",fmt.sample_rate);
-	
+
 	float value = 0;
 	for (int i=0,tick=0;i<lines-1;i++)
 	{
@@ -45,7 +53,7 @@ int main(int argc, char** argv)
 			fwrite(&value,sizeof(float),1,out_fp);
 			tick++;
 		}
-		
+
 		//write actual samples for ticks that do have notes
 		while (tick<start+dur)
 		{

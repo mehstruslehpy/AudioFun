@@ -1,20 +1,18 @@
-main: build
-	#gdb --args ./write in.note out.pcm SINE
-	./write harmony1.note harmony1.pcm TRIANGLE
-	./write harmony2.note harmony2.pcm TRIANGLE
-	./write bass.note bass.pcm SINE
-	./write arp.note arp.pcm SAW
-	cat arp.pcm >> fullarp.pcm
-	cat arp.pcm >> fullarp.pcm
-	sox -t raw -r 44.1k -b 32 -c 1 -e float harmony1.pcm harmony1.wav
-	sox -t raw -r 44.1k -b 32 -c 1 -e float harmony2.pcm harmony2.wav
-	sox -t raw -r 44.1k -b 32 -c 1 -e float bass.pcm bass.wav
-	sox -t raw -r 44.1k -b 32 -c 1 -e float fullarp.pcm fullarp.wav
-	#aplay -f float_le -r 44100 bass.pcm
-	sox -m harmony1.wav harmony2.wav bass.wav fullarp.wav finished.wav
-	aplay finished.wav
+main: build 
+	@echo "Run make test to test the system"
+	@echo "Run make sample-track1 to play a sample track"
+test: build
+	#gdb --args ./write in.note out.pcm SINE #run in gdb
+	./write beat1.note beat1.pcm NOISE
+	cat beat1.pcm >> tmp.pcm
+	cat beat1.pcm >> tmp.pcm
+	mv tmp.pcm beat1.pcm
+	aplay -f float_le -r 44100 beat1.pcm 
+sample-track1: build
+	$(MAKE) -C ./sample-track1/
 clean:
-	rm write *.o *.pcm *.wav
+	rm -f write *.o *.pcm *.wav
+	$(MAKE) -C ./sample-track1/ clean
 build: write file_read frequency time amplitude instruments
 	gcc -g -Wall -pedantic write.o file_read.o frequency.o instruments.o time.o amplitude.o -lm -o write
 write: write.c
