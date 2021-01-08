@@ -1,10 +1,10 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include "draw_coords.h"
-#define WIDTH 1024
-#define HEIGHT 1024
-#define HCOUNT 10
-#define VCOUNT 10
+#define WIDTH 512
+#define HEIGHT 512
+#define HCOUNT 24
+#define VCOUNT 48
 
 //from https://stackoverflow.com/questions/57699050/how-to-create-a-cairo-object-within-a-gtk-window-in-gtk3#58870107
 // ------------------------------------------------------------
@@ -25,9 +25,6 @@ gboolean on_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 		cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
 
 		{ // do your drawing
-			//cairo_move_to(cr, 30, 30);
-			//cairo_set_font_size(cr,15);
-			//cairo_show_text(cr, "hello world");
 			draw_coords(cr,WIDTH,HEIGHT,HCOUNT,VCOUNT);
 		}
 
@@ -56,7 +53,7 @@ int main (int argc, char * argv[]) {
 		g_signal_connect(window, "destroy", gtk_main_quit, NULL);
 	}  
 
-	// create the are we can draw in
+	// create the area we can draw in
 	GtkDrawingArea* drawingArea;
 	{
 		drawingArea = (GtkDrawingArea*) gtk_drawing_area_new();
