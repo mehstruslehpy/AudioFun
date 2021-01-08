@@ -5,6 +5,7 @@
 //TODO: Add stereo/mono modes
 //TODO: Add ADSR using breakpoint files
 //TODO: Add some basic block/clip programs average two files, pad a file/change file length etc.
+//TODO: Add error handling
 int main(int argc, char** argv)
 {
 	FILE* in_fp = fopen(argv[1],"r");
@@ -44,7 +45,7 @@ int main(int argc, char** argv)
 		//print_noteline("cur_note=",&cur_note,"\n");
 
 		//check values with assert
-		assert(tick<=(int)start);
+		//assert(tick<=(int)start);
 
 		//write 0's for ticks that don't have notes
 		while (tick < (int)start) 

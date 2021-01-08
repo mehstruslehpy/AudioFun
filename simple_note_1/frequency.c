@@ -63,7 +63,6 @@ double notestrs_to_freq(char* note, char* octave)
 }
 double read_note(char* str)
 {
-	assert(str!=NULL);
 	switch (str[0])//all formats are underscore separated values
 	{
 		case 'f': //frequency format is f followed by a frequency

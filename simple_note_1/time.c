@@ -2,7 +2,6 @@
 #define BUF_LEN 2048
 double read_time(char* str,Format fmt)
 {
-	assert(str!=NULL);
 	switch (str[0])
 	{
 		case 's': //seconds format is s followed by a number of seconds

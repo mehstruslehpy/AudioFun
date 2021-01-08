@@ -1,10 +1,8 @@
 #ifndef TIME_H 
 #define TIME_H 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include "types.h"
-#define NDEBUG
 //TODO: Add more time formats
 //TODO: Document all time formats
 double read_time(char* str,Format fmt);

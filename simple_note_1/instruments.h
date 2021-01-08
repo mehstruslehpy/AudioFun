@@ -1,9 +1,7 @@
 #ifndef INSTRUMENTS_H 
 #define INSTRUMENTS_H 
-#include <assert.h>
 #include <math.h>
 #include <stdlib.h>
-#define NDEBUG
 //TODO: Add more sound generators
 //TODO: Add fx library
 double sine_gen(double x,double rate);

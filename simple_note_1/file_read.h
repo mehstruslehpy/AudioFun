@@ -4,13 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
 //libraries for decoding noteline values
 #include "types.h"
 #include "amplitude.h"
 #include "time.h"
 #include "frequency.h"
-#define NDEBUG
 //TODO: Add commenting and whitespace skipping functionality
 void print_noteline(char* start_msg,Noteline* n,char* end_msg);
 //count lines in file

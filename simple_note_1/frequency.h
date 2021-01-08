@@ -1,10 +1,8 @@
 #ifndef FREQUENCY_H 
 #define FREQUENCY_H 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#define NDEBUG
 //TODO: add extra formats
 //TODO: document all formats
 //TODO: clean up code so it's not just a pile of switch statements.

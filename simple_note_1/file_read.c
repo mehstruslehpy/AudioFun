@@ -28,7 +28,6 @@ void print_noteline(char* start_msg, Noteline* n, char* end_msg)
 }
 int lines_per_file(FILE* fp)
 {
-	assert(fp!=NULL);
 	int count=0;
 	char c = fgetc(fp);
 	while (c!=EOF)
@@ -44,28 +43,17 @@ int lines_per_file(FILE* fp)
 }
 Format read_format(FILE* fp)
 {
-	assert(fp!=NULL);
 	char file_buf[BUF_LEN]={0};
 
 	//read line into buffer for tokenizing
 	fgets(file_buf,BUF_LEN,fp);
 	char* header = strtok(file_buf," ");
 
-	//assert header is correct
-	assert(strncmp(header,"SAMPLE_RATE:",BUF_LEN)==0);
-	//if header is wrong return -1 sample rate
-	/*
-	if (strncmp(header,"SAMPLE_RATE:",BUF_LEN)!=0)
-		return (Format) {.sample_rate=-1};
-	*/
-
 	char* value = strtok(NULL," ");
 	return (Format) {.sample_rate=atoi(value)};
 }
 Noteline read_noteline(FILE* fp,Format fmt)
 {
-	assert(fp!=NULL);
-
 	//read line
 	char file_buf[BUF_LEN]={'\0'};
 	fgets(file_buf,BUF_LEN,fp);
