@@ -1,2 +1,2 @@
 #!/bin/bash
-grep -r TODO * > TODO.md
+grep -r TODO ./* > TODO.md

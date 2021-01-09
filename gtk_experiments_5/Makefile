@@ -1,4 +1,4 @@
-FILES := gtk-hello-window gtk-hello-world
+FILES := gtk-hello-window gtk-hello-world gtk-packing gtk-builder-packing
 CC := gcc
 MISC-CFLAGS := -g -Wall -pedantic -I /usr/include/cairo
 MISC-LFLAGS := -g -Wall -pedantic 
@@ -19,4 +19,4 @@ $(FILES):$@
 	#./$@
 
 clean:
-	rm $(FILES) *.o 
+	rm -f $(FILES) *.o 

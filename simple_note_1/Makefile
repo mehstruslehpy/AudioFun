@@ -2,8 +2,8 @@ main: build
 	@echo "Run make test to test the system"
 	@echo "Run make sample-track1 to play a sample track"
 test: build
-	#gdb --args ./write in.note out.pcm SINE #run in gdb
 	./write beat1.note beat1.pcm NOISE
+	#gdb --args ./write beat1.note beat1.pcm NOISE
 	cat beat1.pcm >> tmp.pcm
 	cat beat1.pcm >> tmp.pcm
 	mv tmp.pcm beat1.pcm

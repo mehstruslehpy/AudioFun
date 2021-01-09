@@ -11,6 +11,7 @@
 #include "time.h"
 #include "frequency.h"
 void print_noteline(char* start_msg,Noteline* n,char* end_msg);
+int file_size(FILE* fp);
 //count lines in file
 int lines_per_file(FILE* fp);
 int blank_lines_per_file(FILE* fp);

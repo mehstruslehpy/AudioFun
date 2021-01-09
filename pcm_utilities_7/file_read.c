@@ -1,5 +1,16 @@
 #include "file_read.h"
 #define BUF_LEN 2048
+//return file size in bytes
+//this can be updated to a long int if necessary
+int file_size(FILE* fp)
+{
+	//long int size = 0;
+	int size = 0;
+	fseek(fp,0,SEEK_END);
+	size = ftell(fp);
+	fseek(fp,0,SEEK_SET);
+	return size;
+}
 //checks if string is a comment
 int is_comment(char* str)
 {
