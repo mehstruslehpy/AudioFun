@@ -143,8 +143,6 @@ int main (int argc, char * argv[]) {
 	
 	gtk_widget_show_all ((GtkWidget*)window);
 	gtk_main();
-
-	printf("DON'T FORGET TO FREE THE RECTANGLE STACK!\n");
 	deallocate(&rectangles);
 	return 0;
 }
