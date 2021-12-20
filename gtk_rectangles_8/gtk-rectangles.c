@@ -1,0 +1,120 @@
+#include <gtk/gtk.h>
+#include <cairo.h>
+#include "draw_coords.h"
+#include "draw_rectangles.h"
+#define WIDTH 512
+#define HEIGHT 512
+#define HCOUNT 24
+#define VCOUNT 48
+
+//this should be relocated later.
+typedef struct Rectangle
+{
+	int x1;
+	int y1;
+	int x2;
+	int y2;
+} Rectangle;
+
+gboolean on_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_data)
+{
+	static Rectangle rect;
+	if (event->type==GDK_BUTTON_PRESS)
+	{
+		printf("Button pressed at: (%f,%f)\n",event->x,event->y);
+		rect.x1 = event->x;
+		rect.y1 = event->y;
+	}
+	else if (event->type==GDK_BUTTON_RELEASE)
+	{
+		printf("Button released at: (%f,%f)\n",event->x,event->y);
+		rect.x2=event->x;
+		rect.y2=event->y;
+		printf("draw rectangle: (%d,%d)   (%d,%d)\n\n",rect.x1,rect.y1,rect.x2,rect.y2);
+		on_draw(user_data,event,&rect);
+	}
+	return TRUE;
+}
+
+//from https://stackoverflow.com/questions/57699050/how-to-create-a-cairo-object-within-a-gtk-window-in-gtk3#58870107
+// ------------------------------------------------------------
+gboolean on_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data) 
+{
+	Rectangle rect = {
+						.x1=((Rectangle*)data)->x1,
+						.y1=((Rectangle*)data)->y1,
+						.x2=((Rectangle*)data)->x2,
+						.y2=((Rectangle*)data)->y2
+						};
+	// "convert" the G*t*kWidget to G*d*kWindow (no, it's not a GtkWindow!)
+	GdkWindow* window = gtk_widget_get_window(widget);  
+
+	cairo_region_t * cairoRegion = cairo_region_create();
+
+	GdkDrawingContext * drawingContext;
+	drawingContext = gdk_window_begin_draw_frame (window,cairoRegion);
+
+	{ 
+		// say: "I want to start drawing"
+		cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
+
+		{ // do your drawing
+			draw_coords(cr,WIDTH,HEIGHT,HCOUNT,VCOUNT);
+			draw_rectangle(cr,rect.x1,rect.y1,rect.x2,rect.y2);
+		}
+
+		// say: "I'm finished drawing
+		gdk_window_end_draw_frame(window,drawingContext);
+	}
+
+	// cleanup
+	cairo_region_destroy(cairoRegion);
+
+	return FALSE;
+}
+
+// ------------------------------------------------------------
+
+int main (int argc, char * argv[]) {
+	//check for coorect number of parameters
+	if (argc!=5)
+	{
+		printf("ERROR: You must specify four parameters\n");
+		return 0;
+	}
+	//the rectangle to draw
+	Rectangle rect = {.x1=atoi(argv[1]), .y1=atoi(argv[2]), .x2=atoi(argv[3]), .y2=atoi(argv[4])};
+	printf("Rectangle coords: p1=(%d,%d),p2=(%d,%d)\n",rect.x1,rect.y1,rect.x2,rect.y2);
+
+	gtk_init(&argc, &argv);
+	GtkWindow * window; 
+	{ // window setup
+		window = (GtkWindow*)gtk_window_new(GTK_WINDOW_TOPLEVEL);
+		gtk_window_set_default_size (window, WIDTH, HEIGHT);
+		gtk_window_set_position     (window, GTK_WIN_POS_CENTER);
+		gtk_window_set_title        (window, "Drawing");
+		g_signal_connect(window, "destroy", gtk_main_quit, NULL);
+		gtk_widget_add_events(window, GDK_BUTTON_PRESS_MASK); //enable key press mask on window
+		gtk_widget_add_events(window, GDK_BUTTON_RELEASE_MASK); //enable key release mask on window
+	/*	g_signal_connect(window, "button-press-event", G_CALLBACK(on_button), NULL); //set up button press signal
+		g_signal_connect(window, "button-release-event", G_CALLBACK(on_button), NULL); //set up button release signal
+*/
+	}  
+
+	// create the area we can draw in
+	GtkDrawingArea* drawingArea;
+	{
+		drawingArea = (GtkDrawingArea*) gtk_drawing_area_new();
+		gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)drawingArea);
+		g_signal_connect((GtkWidget*)drawingArea, "draw", G_CALLBACK(on_draw), &rect);    
+	}  
+
+	g_signal_connect(window, "button-press-event", G_CALLBACK(on_button), drawingArea); //set up button press signal
+	g_signal_connect(window, "button-release-event", G_CALLBACK(on_button), drawingArea); //set up button release signal
+	
+	gtk_widget_show_all ((GtkWidget*)window);
+	gtk_main();
+
+	return 0;
+}
+
