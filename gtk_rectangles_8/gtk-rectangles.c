@@ -2,20 +2,15 @@
 #include <cairo.h>
 #include "draw_coords.h"
 #include "draw_rectangles.h"
-#define WIDTH 512
-#define HEIGHT 512
+//width of screen
+#define WIDTH 1024
+//height of screen
+#define HEIGHT 650 
+//grid divisions of screen
 #define HCOUNT 24
 #define VCOUNT 48
 
-//this should be relocated later.
-typedef struct Rectangle
-{
-	int x1;
-	int y1;
-	int x2;
-	int y2;
-} Rectangle;
-
+//callback that handles mouse click
 gboolean on_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_data)
 {
 	static Rectangle rect;
@@ -76,14 +71,12 @@ gboolean on_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 // ------------------------------------------------------------
 
 int main (int argc, char * argv[]) {
-	//check for coorect number of parameters
-	if (argc!=5)
+	Rectangle rect = {0};
+	if (argc==5)
 	{
 		printf("ERROR: You must specify four parameters\n");
-		return 0;
+		rect = (Rectangle){.x1=atoi(argv[1]), .y1=atoi(argv[2]), .x2=atoi(argv[3]), .y2=atoi(argv[4])};
 	}
-	//the rectangle to draw
-	Rectangle rect = {.x1=atoi(argv[1]), .y1=atoi(argv[2]), .x2=atoi(argv[3]), .y2=atoi(argv[4])};
 	printf("Rectangle coords: p1=(%d,%d),p2=(%d,%d)\n",rect.x1,rect.y1,rect.x2,rect.y2);
 
 	gtk_init(&argc, &argv);
@@ -96,9 +89,6 @@ int main (int argc, char * argv[]) {
 		g_signal_connect(window, "destroy", gtk_main_quit, NULL);
 		gtk_widget_add_events(window, GDK_BUTTON_PRESS_MASK); //enable key press mask on window
 		gtk_widget_add_events(window, GDK_BUTTON_RELEASE_MASK); //enable key release mask on window
-	/*	g_signal_connect(window, "button-press-event", G_CALLBACK(on_button), NULL); //set up button press signal
-		g_signal_connect(window, "button-release-event", G_CALLBACK(on_button), NULL); //set up button release signal
-*/
 	}  
 
 	// create the area we can draw in
@@ -109,6 +99,7 @@ int main (int argc, char * argv[]) {
 		g_signal_connect((GtkWidget*)drawingArea, "draw", G_CALLBACK(on_draw), &rect);    
 	}  
 
+	//set up mouse button press and release signals
 	g_signal_connect(window, "button-press-event", G_CALLBACK(on_button), drawingArea); //set up button press signal
 	g_signal_connect(window, "button-release-event", G_CALLBACK(on_button), drawingArea); //set up button release signal
 	
