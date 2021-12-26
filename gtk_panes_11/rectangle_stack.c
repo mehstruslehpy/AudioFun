@@ -27,6 +27,11 @@ void push(Rectangle rect, RectStack* stk_ptr)
 		rect.y1 = rect.y2;
 		rect.y2 = temp;
 	}
+	
+	//always force rectangle velocity to be between 0 and 1
+	if (rect.vel>1) rect.vel=1;
+	else if (rect.vel<0) rect.vel=0;
+
 	//otherwise rectangle on input is already correct
 	pushNode(makeNode(rect),stk_ptr);
 }

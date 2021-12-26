@@ -23,32 +23,48 @@ gboolean on_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_da
 {
 	static Rectangle rect;
 	Context context = *((Context*)user_data);
+
+	//right mouse button press
+	if ((event->button==2||event->button==3)&&event->type==GDK_BUTTON_PRESS)
+	{
+		printf("Left button press at: (%f,%f)\n",event->x,event->y);
+		remove_rectangles_containing_point(context.rectangle_stack,event->x,event->y);
+		on_draw(context.drawing_area,event,context.rectangle_stack);
+		return TRUE;
+	} //right mouse button release
+	else if ((event->button==2||event->button==3)&&event->type==GDK_BUTTON_RELEASE)
+	{
+		return TRUE;
+	}
+
+	//left mouse button press
 	if (event->type==GDK_BUTTON_PRESS)
 	{
-		printf("Button pressed at: (%f,%f)\n",event->x,event->y);
+		printf("Right button pressed at: (%f,%f)\n",event->x,event->y);
 		rect.x1 = event->x;
 		rect.y1 = event->y;
 	}
 	else if (event->type==GDK_BUTTON_RELEASE)
 	{
-		printf("Button released at: (%f,%f)\n",event->x,event->y);
+		printf("Right button released at: (%f,%f)\n",event->x,event->y);
 		rect.x2=event->x;
 		rect.y2=event->y;
-		printf("draw rectangle: (%d,%d)   (%d,%d)\n\n",rect.x1,rect.y1,rect.x2,rect.y2);
+		printf("draw rectangle: (%f,%f)   (%f,%f)\n",rect.x1,rect.y1,rect.x2,rect.y2);
 
 		//compute width/height of each division of the screen into the grid
 		float w = ((float)WIDTH)/((float)HCOUNT);
 		float h = ((float)HEIGHT)/((float)VCOUNT);
+
 		//snap the current rectangle to the grid points of the screen
 		snapped_rect_to_grid(&rect,w,h);
-		//offset coordinates of rectangle to something nice
+
 		if (rect.x1<rect.x2&&rect.y1>rect.y2) //mouse press->release starts bottom left ends top right
 		{
 			rect.y1+=h;
 			rect.x2+=w;
 		}
 		else if (rect.x1>=rect.x2&&rect.y1>rect.y2) //from bottom right to top left
-		{//
+		{
 			rect.x1+=w;
 			rect.y1+=h;
 		}
@@ -62,7 +78,8 @@ gboolean on_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_da
 			rect.x1+=w;
 			rect.y2+=h;
 		}
-		//TODO: Add checking algorithm that removes rectangle if it overlaps any that already exist in the stack
+
+		//push rectangle to stack
 		push(rect,context.rectangle_stack);
 		//draw the rectangle
 		//on_draw(context.drawing_area,event,&rect);
@@ -132,7 +149,6 @@ int main (int argc, char * argv[]) {
 	{
 		drawingArea = (GtkDrawingArea*) gtk_drawing_area_new();
 		gtk_container_add(GTK_CONTAINER(window), (GtkWidget*)drawingArea);
-		//g_signal_connect((GtkWidget*)drawingArea, "draw", G_CALLBACK(on_draw), &rect);    
 		g_signal_connect((GtkWidget*)drawingArea, "draw", G_CALLBACK(on_draw), &rectangles);    
 	}  
 	context.drawing_area = drawingArea;
@@ -144,6 +160,7 @@ int main (int argc, char * argv[]) {
 	gtk_widget_show_all ((GtkWidget*)window);
 	gtk_main();
 	deallocate(&rectangles);
+
 	return 0;
 }
 
