@@ -3,13 +3,6 @@
 #include "draw_coords.h"
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
-//width of screen
-#define WIDTH 1024
-//height of screen
-#define HEIGHT 650 
-//grid divisions of screen
-#define HCOUNT 24
-#define VCOUNT 48
 
 //passed to callbacks, contains drawing area, rectangles to be drawn and pan/zoom amounts
 typedef struct context
@@ -17,9 +10,13 @@ typedef struct context
 	RectStack* rectangle_stack;
 	GtkDrawingArea* note_drawing_area;
 	GtkDrawingArea* velocity_drawing_area;
-	double zoom;
-	double pan_x;
-	double pan_y;
+	int width; //width of the model
+	int height; //height of the model
+	int hcount; //horizontal grid divisions of the model
+	int vcount; //vertical grid divisions of the model
+	double zoom; //zoom amount
+	double pan_x; //x panning amount
+	double pan_y; //y panning amount
 } Context;
 
 gboolean pan_zoom_key(GtkWidget *widget, GdkEventKey  *event, gpointer   user_data)
@@ -68,9 +65,9 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 
 	//xform pointer coords to from screen to model coords
 	event->x-=context.pan_x;
-	event->y-=context.pan_y;
+	//event->y-=context.pan_y;
 	event->x/=context.zoom;
-	event->y/=context.zoom;
+	//event->y/=context.zoom;
 
 	//left mouse button press
 	if (event->type==GDK_BUTTON_PRESS)
@@ -81,11 +78,15 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 
 		RNode* rn = context.rectangle_stack->top;
 
-		float w = ((float)WIDTH)/((float)HCOUNT);
+		float w = ((float)context.width)/((float)context.hcount);
 		while (rn!=NULL)
 		{
 			if (rect.x1>=rn->info.x1 && rect.x1<=rn->info.x1+w)
-				rn->info.vel = (float)(HEIGHT-rect.y1)/(float)HEIGHT;
+			{
+				printf("Velocity change:\n\tOld velocity: %f\n",rn->info.vel);
+				rn->info.vel = (float)(context.height-rect.y1)/(float)context.height;
+				printf("\tNew velocity: %f\n",rn->info.vel);
+			}
 			rn=rn->next;
 		}
 
@@ -139,8 +140,8 @@ gboolean note_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_
 		printf("draw rectangle: (%f,%f)   (%f,%f)\n",rect.x1,rect.y1,rect.x2,rect.y2);
 
 		//compute width/height of each division of the screen into the grid
-		float w = ((float)WIDTH)/((float)HCOUNT);
-		float h = ((float)HEIGHT)/((float)VCOUNT);
+		float w = ((float)context.width)/((float)context.hcount);
+		float h = ((float)context.height)/((float)context.vcount);
 
 		//snap the current rectangle to the grid points of the screen
 		snapped_rect_to_grid(&rect,w,h);
@@ -194,12 +195,11 @@ gboolean note_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
 	
 	//Setup pan and zoom
-	printf("pan_x=%f,pan_y=%f,zoom=%f\n",context.pan_x,context.pan_y,context.zoom);
 	cairo_translate(cr,context.pan_x,context.pan_y);
 	cairo_scale(cr,context.zoom,context.zoom);
 
 	//draw coord lines and etc
-	draw_coords(cr,WIDTH,HEIGHT,HCOUNT,VCOUNT);
+	draw_coords(cr,context.width,context.height,context.hcount,context.vcount);
 
 	//draw all rectangles to screen	
 	RectStack stk = *(context.rectangle_stack);
@@ -207,7 +207,7 @@ gboolean note_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 
 	while (rn!=NULL)
 	{
-		draw_rectangle(cr,rn->info.x1,rn->info.y1,rn->info.x2,rn->info.y2);
+		draw_rectangle(cr,rn->info.x1,rn->info.y1,rn->info.x2,rn->info.y2,0,rn->info.vel,1-rn->info.vel);
 		rn=rn->next;
 	}
 
@@ -234,23 +234,23 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
 
 	//Setup pan and zoom
-	printf("pan_x=%f,pan_y=%f,zoom=%f\n",context.pan_x,context.pan_y,context.zoom);
-	cairo_translate(cr,context.pan_x,context.pan_y);
-	cairo_scale(cr,context.zoom,context.zoom);
+	//cairo_translate(cr,context.pan_x,context.pan_y);
+	cairo_translate(cr,context.pan_x,0);
+	//cairo_scale(cr,context.zoom,context.zoom);
+	cairo_scale(cr,context.zoom,1);
 
 	//draw coord grid lines
-	draw_coords(cr,WIDTH,HEIGHT,HCOUNT,VCOUNT);
+	draw_coords(cr,context.width,context.height,context.hcount,context.vcount);
 
 	//draw rectangles
 	RectStack stk = *(context.rectangle_stack);
 	RNode* rn = stk.top;
-	float w = ((float)WIDTH)/((float)HCOUNT);
+	float w = ((float)context.width)/((float)context.hcount);
 	while (rn!=NULL)
 	{
-		printf("pan_x=%f,pan_y=%f,zoom=%f\n",context.pan_x,context.pan_y,context.zoom);
 		//draw_rectangle(cr,rn->info.x1,HEIGHT,rn->info.x1+w,HEIGHT*(1-rn->info.vel));
 		//this version draws velocity rectangles with a width of 15 pixels
-		draw_rectangle(cr,rn->info.x1,HEIGHT,rn->info.x1+15,HEIGHT*(1-rn->info.vel));
+		draw_rectangle(cr,rn->info.x1,context.height,rn->info.x1+15,context.height*(1-rn->info.vel),0,rn->info.vel,1-rn->info.vel);
 		rn=rn->next;
 	}
 
@@ -263,13 +263,16 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	return FALSE;
 }
 // ------------------------------------------------------------
-
 int main (int argc, char * argv[]) {
 	//variables about drawing area and rectangle stack
 	Context context = {
 						.rectangle_stack=NULL,
 						.note_drawing_area=NULL,
 						.velocity_drawing_area=NULL,
+						.width=1024,
+						.height=650,
+						.hcount=24,
+						.vcount=48,
 						.pan_x=1,
 						.pan_y=1,
 						.zoom=1
@@ -285,7 +288,7 @@ int main (int argc, char * argv[]) {
 	gtk_window_set_title(window, "Drawing");
 	g_signal_connect(window, "destroy", gtk_main_quit, NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(window),10);
-	gtk_widget_set_size_request(window,WIDTH,HEIGHT);
+	gtk_widget_set_size_request(window,context.width,context.height);
 	gtk_widget_add_events(window, GDK_KEY_PRESS_MASK); //enable key press mask
 
 	// create the note drawing area
@@ -307,7 +310,7 @@ int main (int argc, char * argv[]) {
 	GtkWidget *vpaned = gtk_vpaned_new();
 	gtk_paned_add1(GTK_PANED(vpaned),noteDrawingArea);
 	gtk_paned_add2(GTK_PANED(vpaned),velocityDrawingArea);
-	gtk_paned_set_position(vpaned, HEIGHT/2);
+	gtk_paned_set_position(vpaned, context.height/2);
 	gtk_paned_set_wide_handle(vpaned, TRUE);
 	gtk_container_add(GTK_CONTAINER(window), vpaned);
 	

@@ -7,10 +7,11 @@ void snapped_rect_to_grid(Rectangle* rect,float width,float height)
 	rect->x2 = width*floorf(rect->x2/width);
 	rect->y2 = height*floorf(rect->y2/height);
 }
-void draw_rectangle(cairo_t* cr,int x1,int y1,int x2,int y2)
+void draw_rectangle(cairo_t* cr,int x1,int y1,int x2,int y2,double r,double g,double b)
 {
 	//draw outline
-	cairo_set_source_rgb (cr, 0, 1, 0);
+	//cairo_set_source_rgb (cr, 0, 1, 0);
+	cairo_set_source_rgb (cr, r, g, b);
 	//line 1
 	cairo_move_to(cr, x1, y1);
 	cairo_line_to(cr, x1, y2);
