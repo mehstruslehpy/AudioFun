@@ -3,6 +3,7 @@
 #include "draw_coords.h"
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
+//TODO: Decouple model and window dimensions
 
 //passed to callbacks, contains drawing area, rectangles to be drawn and pan/zoom amounts
 typedef struct context
@@ -65,9 +66,14 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 
 	//xform pointer coords to from screen to model coords
 	event->x-=context.pan_x;
-	//event->y-=context.pan_y;
+	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
+	float ratio = (float)slider_pos/(float)context.height;
 	event->x/=context.zoom;
-	//event->y/=context.zoom;
+	//TODO: Figure out how to make this magic number 25 more meaningful
+	//it's just aan offset to align the bottom of the velocity grid to the
+	//bottom of the bottom pane
+	event->y+=25;
+	event->y/=(1-ratio);
 
 	//left mouse button press
 	if (event->type==GDK_BUTTON_PRESS)
@@ -130,7 +136,7 @@ gboolean note_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_
 		printf("Note window left button pressed at: (%f,%f)\n",event->x,event->y);
 		rect.x1 = event->x;
 		rect.y1 = event->y;
-		rect.vel = 1;
+		rect.vel = 0.80;
 	}
 	else if (event->type==GDK_BUTTON_RELEASE)
 	{
@@ -234,11 +240,13 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
 
 	//Setup pan and zoom
-	//cairo_translate(cr,context.pan_x,context.pan_y);
-	cairo_translate(cr,context.pan_x,0);
-	//cairo_scale(cr,context.zoom,context.zoom);
-	cairo_scale(cr,context.zoom,1);
-
+	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
+	float ratio = (float)slider_pos/(float)context.height;
+	//TODO: Figure out how to make this magic number 25 more meaningful
+	//it's just aan offset to align the bottom of the velocity grid to the
+	//bottom of the bottom pane
+	cairo_translate(cr,context.pan_x,-25);
+	cairo_scale(cr,context.zoom,1-ratio);
 	//draw coord grid lines
 	draw_coords(cr,context.width,context.height,context.hcount,context.vcount);
 
@@ -277,6 +285,13 @@ int main (int argc, char * argv[]) {
 						.pan_y=1,
 						.zoom=1
 	};
+	if (argc==5)
+	{
+		context.width = atoi(argv[1]);
+		context.height = atoi(argv[2]);
+		context.hcount= atoi(argv[3]);
+		context.vcount = atoi(argv[4]);
+	}
 	RectStack rectangles = {.top=NULL};
 	context.rectangle_stack = &rectangles;
 
@@ -301,18 +316,18 @@ int main (int argc, char * argv[]) {
 	GtkDrawingArea* velocityDrawingArea;
 	velocityDrawingArea = (GtkDrawingArea*) gtk_drawing_area_new();
 	gtk_widget_add_events(velocityDrawingArea, GDK_BUTTON_PRESS_MASK); //enable key press mask
-
-	//set up drawing area in context
-	context.note_drawing_area = noteDrawingArea;
-	context.velocity_drawing_area = velocityDrawingArea;
 	
 	//pane widget setup
-	GtkWidget *vpaned = gtk_vpaned_new();
+	GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 	gtk_paned_add1(GTK_PANED(vpaned),noteDrawingArea);
 	gtk_paned_add2(GTK_PANED(vpaned),velocityDrawingArea);
 	gtk_paned_set_position(vpaned, context.height/2);
 	gtk_paned_set_wide_handle(vpaned, TRUE);
 	gtk_container_add(GTK_CONTAINER(window), vpaned);
+
+	//set up drawing area in context
+	context.note_drawing_area = noteDrawingArea;
+	context.velocity_drawing_area = velocityDrawingArea;
 	
 	//set up mouse button press and release signals
 	g_signal_connect((GtkWidget*)noteDrawingArea, "draw", G_CALLBACK(note_draw), &context);    

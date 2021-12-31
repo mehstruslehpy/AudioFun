@@ -1,5 +1,5 @@
 #include "draw_coords.h"
-
+//TODO: the horizontal/vertical functions here are backwards, draw_horiz draws vertical lines and vice versa on accident
 void draw_coords(cairo_t* cr,int x_bound,int y_bound,int hcount,int vcount)
 {
 	//save old ctm so we can fill whole background with white

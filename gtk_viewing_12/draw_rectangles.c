@@ -38,5 +38,4 @@ void draw_rectangle(cairo_t* cr,int x1,int y1,int x2,int y2,double r,double g,do
 	cairo_move_to(cr, x2, y1);
 	cairo_line_to(cr, x2, y2);
 	cairo_stroke(cr);
-
 }
