@@ -3,7 +3,7 @@
 #include "draw_coords.h"
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
-//TODO: Decouple model and window dimensions
+//TODO: fix bottom window scaling to work for any sizes
 
 //passed to callbacks, contains drawing area, rectangles to be drawn and pan/zoom amounts
 typedef struct context
@@ -11,8 +11,10 @@ typedef struct context
 	RectStack* rectangle_stack;
 	GtkDrawingArea* note_drawing_area;
 	GtkDrawingArea* velocity_drawing_area;
+	int window_width; //width of the window
 	int width; //width of the model
 	int height; //height of the model
+	int window_height; //height of the window
 	int hcount; //horizontal grid divisions of the model
 	int vcount; //vertical grid divisions of the model
 	double zoom; //zoom amount
@@ -277,7 +279,9 @@ int main (int argc, char * argv[]) {
 						.rectangle_stack=NULL,
 						.note_drawing_area=NULL,
 						.velocity_drawing_area=NULL,
+						.window_width=1024,
 						.width=1024,
+						.window_height=650,
 						.height=650,
 						.hcount=24,
 						.vcount=48,
@@ -285,12 +289,14 @@ int main (int argc, char * argv[]) {
 						.pan_y=1,
 						.zoom=1
 	};
-	if (argc==5)
+	if (argc==7)
 	{
-		context.width = atoi(argv[1]);
-		context.height = atoi(argv[2]);
-		context.hcount= atoi(argv[3]);
-		context.vcount = atoi(argv[4]);
+		context.window_width = atoi(argv[1]);
+		context.window_height = atoi(argv[2]);
+		context.width = atoi(argv[3]);
+		context.height = atoi(argv[4]);
+		context.hcount= atoi(argv[5]);
+		context.vcount = atoi(argv[6]);
 	}
 	RectStack rectangles = {.top=NULL};
 	context.rectangle_stack = &rectangles;
@@ -303,7 +309,7 @@ int main (int argc, char * argv[]) {
 	gtk_window_set_title(window, "Drawing");
 	g_signal_connect(window, "destroy", gtk_main_quit, NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(window),10);
-	gtk_widget_set_size_request(window,context.width,context.height);
+	gtk_widget_set_size_request(window,context.window_width,context.window_height);
 	gtk_widget_add_events(window, GDK_KEY_PRESS_MASK); //enable key press mask
 
 	// create the note drawing area
