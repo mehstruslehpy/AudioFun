@@ -3,7 +3,12 @@
 #include "draw_coords.h"
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
-//TODO: fix bottom window scaling to work for any sizes
+//the count of divisions for the velocity pane
+#define VELOCITY_V_COUNT 10
+//TODO: Figure out how to make this offset value work for all kinds of window sizes
+//An offset that sets the position of the bottom of the velocity pane
+//with respect to the main window
+#define VELOCITY_PANE_OFFSET 25
 
 //passed to callbacks, contains drawing area, rectangles to be drawn and pan/zoom amounts
 typedef struct context
@@ -12,11 +17,15 @@ typedef struct context
 	GtkDrawingArea* note_drawing_area;
 	GtkDrawingArea* velocity_drawing_area;
 	int window_width; //width of the window
+	int window_height; //height of the window
 	int width; //width of the model
 	int height; //height of the model
-	int window_height; //height of the window
+	int velocity_width; //width of velocity pane
+	int velocity_height; //height of velocity pane
 	int hcount; //horizontal grid divisions of the model
 	int vcount; //vertical grid divisions of the model
+	int velocity_hcount; //horizontal grid divisions of the velocity pane
+	int velocity_vcount; //vertical grid divisions of the velocity pane
 	double zoom; //zoom amount
 	double pan_x; //x panning amount
 	double pan_y; //y panning amount
@@ -69,12 +78,9 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 	//xform pointer coords to from screen to model coords
 	event->x-=context.pan_x;
 	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
-	float ratio = (float)slider_pos/(float)context.height;
+	float ratio = (float)slider_pos/(float)context.velocity_height;
 	event->x/=context.zoom;
-	//TODO: Figure out how to make this magic number 25 more meaningful
-	//it's just aan offset to align the bottom of the velocity grid to the
-	//bottom of the bottom pane
-	event->y+=25;
+	event->y+=VELOCITY_PANE_OFFSET;
 	event->y/=(1-ratio);
 
 	//left mouse button press
@@ -86,13 +92,13 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 
 		RNode* rn = context.rectangle_stack->top;
 
-		float w = ((float)context.width)/((float)context.hcount);
+		float w = ((float)context.velocity_width)/((float)context.hcount);
 		while (rn!=NULL)
 		{
 			if (rect.x1>=rn->info.x1 && rect.x1<=rn->info.x1+w)
 			{
 				printf("Velocity change:\n\tOld velocity: %f\n",rn->info.vel);
-				rn->info.vel = (float)(context.height-rect.y1)/(float)context.height;
+				rn->info.vel = (float)(context.velocity_height-rect.y1)/(float)context.velocity_height;
 				printf("\tNew velocity: %f\n",rn->info.vel);
 			}
 			rn=rn->next;
@@ -243,24 +249,27 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 
 	//Setup pan and zoom
 	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
-	float ratio = (float)slider_pos/(float)context.height;
-	//TODO: Figure out how to make this magic number 25 more meaningful
-	//it's just aan offset to align the bottom of the velocity grid to the
-	//bottom of the bottom pane
-	cairo_translate(cr,context.pan_x,-25);
+	float ratio = (float)slider_pos/(float)context.velocity_height;
+	cairo_translate(cr,context.pan_x,-VELOCITY_PANE_OFFSET);
 	cairo_scale(cr,context.zoom,1-ratio);
 	//draw coord grid lines
-	draw_coords(cr,context.width,context.height,context.hcount,context.vcount);
+	draw_coords(cr,context.velocity_width,context.velocity_height,context.velocity_hcount,context.velocity_vcount);
 
 	//draw rectangles
 	RectStack stk = *(context.rectangle_stack);
 	RNode* rn = stk.top;
-	float w = ((float)context.width)/((float)context.hcount);
+	float w = ((float)context.velocity_width)/((float)context.velocity_hcount);
 	while (rn!=NULL)
 	{
 		//draw_rectangle(cr,rn->info.x1,HEIGHT,rn->info.x1+w,HEIGHT*(1-rn->info.vel));
 		//this version draws velocity rectangles with a width of 15 pixels
-		draw_rectangle(cr,rn->info.x1,context.height,rn->info.x1+15,context.height*(1-rn->info.vel),0,rn->info.vel,1-rn->info.vel);
+		draw_rectangle(cr,rn->info.x1,
+						context.velocity_height,
+						rn->info.x1+15,
+						context.velocity_height*(1-rn->info.vel),
+						0,
+						rn->info.vel,
+						1-rn->info.vel);
 		rn=rn->next;
 	}
 
@@ -280,23 +289,42 @@ int main (int argc, char * argv[]) {
 						.note_drawing_area=NULL,
 						.velocity_drawing_area=NULL,
 						.window_width=1024,
-						.width=1024,
 						.window_height=650,
+						.width=1024,
 						.height=650,
+						.velocity_width=1024,
+						.velocity_height=650,
 						.hcount=24,
 						.vcount=48,
+						.velocity_hcount=24,
+						.velocity_vcount=VELOCITY_V_COUNT,
 						.pan_x=1,
 						.pan_y=1,
 						.zoom=1
 	};
+	if (argc==2 && strcmp(argv[1],"-h")==0)
+	{
+		printf("USAGE: gtk-view <win-width> <win-width> <model-width> <model-height> <h-divs> <v-divs>\n");
+		printf("\t<win-width> the width of the window.\n");
+		printf("\t<win-height> the height of the window.\n");
+		printf("\t<model-width> the width of the model in the top pane.\n");
+		printf("\t<model-height> the height of the model in the top pane.\n");
+		printf("\t<h-divs> the number of horizontal divisions for the top pane.\n");
+		printf("\t<v-divs> the number of vertical divisions for the top pane.\n");
+		return 0;
+	}
 	if (argc==7)
 	{
 		context.window_width = atoi(argv[1]);
 		context.window_height = atoi(argv[2]);
 		context.width = atoi(argv[3]);
 		context.height = atoi(argv[4]);
+		context.velocity_width = atoi(argv[3]);
+		context.velocity_height = 650;
 		context.hcount= atoi(argv[5]);
 		context.vcount = atoi(argv[6]);
+		context.velocity_hcount= atoi(argv[5]);
+		context.velocity_vcount = VELOCITY_V_COUNT;
 	}
 	RectStack rectangles = {.top=NULL};
 	context.rectangle_stack = &rectangles;
@@ -327,7 +355,7 @@ int main (int argc, char * argv[]) {
 	GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 	gtk_paned_add1(GTK_PANED(vpaned),noteDrawingArea);
 	gtk_paned_add2(GTK_PANED(vpaned),velocityDrawingArea);
-	gtk_paned_set_position(vpaned, context.height/2);
+	gtk_paned_set_position(vpaned, context.window_height/2);
 	gtk_paned_set_wide_handle(vpaned, TRUE);
 	gtk_container_add(GTK_CONTAINER(window), vpaned);
 
