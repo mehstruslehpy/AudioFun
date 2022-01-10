@@ -384,6 +384,7 @@ int main (int argc, char * argv[]) {
 	gtk_widget_add_events(window, GDK_KEY_PRESS_MASK); //enable key press mask
 	//gtk_widget_add_events(window, GDK_CONFIGURE); //enable window move/resize
 	gtk_window_set_resizable(window, FALSE); //disable resizing for now
+	//gtk_window_set_resizable(window, TRUE); //enable resizing for now
 
 	// create the note drawing area
 	GtkDrawingArea* noteDrawingArea;
@@ -401,7 +402,7 @@ int main (int argc, char * argv[]) {
 	gtk_paned_pack1(GTK_PANED(vpaned),noteDrawingArea,TRUE,TRUE);
 	gtk_paned_pack2(GTK_PANED(vpaned),velocityDrawingArea,TRUE,TRUE);
 	gtk_paned_set_position(vpaned, context.window_height/2);
-	gtk_paned_set_wide_handle(vpaned, TRUE);
+	//gtk_paned_set_wide_handle(vpaned, TRUE);
 	gtk_container_add(GTK_CONTAINER(window), vpaned);
 
 	//set up drawing area in context
@@ -428,6 +429,10 @@ int main (int argc, char * argv[]) {
 					G_CALLBACK(pan_zoom_key), 
 					&context); //set up button press signal
 	//g_signal_connect(G_OBJECT(window), "configure-event",G_CALLBACK(configure_callback), &context); //callback on window resize
+
+	printf("DEBUG: pane border width=%d\n",gtk_container_get_border_width(vpaned));
+	printf("DEBUG: window border width=%d\n",gtk_container_get_border_width(window));
+	gtk_container_set_border_width(window,0);
 
 	gtk_widget_show_all ((GtkWidget*)window);
 	gtk_main();
