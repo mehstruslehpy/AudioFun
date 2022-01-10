@@ -43,6 +43,14 @@ void draw_horiz_lines(cairo_t* cr,int hcount,int x_bound, int y_bound)
 		cairo_stroke (cr);
 		x+=hincr;
 	}
+	//cairo_set_source_rgb (cr, 0, 1, 0);
+	//cairo_arc(cr, 0, 0, 50, 0, 2 * M_PI);
+	//cairo_set_source_rgb (cr, 1, 0, 0);
+	//cairo_arc(cr, x_bound, 0, 50, 0, 2 * M_PI);
+	//cairo_set_source_rgb (cr, 0, 0, 1);
+	//cairo_arc(cr, x_bound, y_bound, 50, 0, 2 * M_PI);
+	//cairo_set_source_rgb (cr, 0, 0, 1);
+	//cairo_arc(cr, 0, y_bound, 50, 0, 2 * M_PI);
 }
 
 void draw_vert_lines(cairo_t* cr,int vcount,int x_bound, int y_bound)

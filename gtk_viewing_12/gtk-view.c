@@ -1,14 +1,12 @@
 #include <gtk/gtk.h>
 #include <cairo.h>
+#include <stdlib.h>
 #include "draw_coords.h"
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
+//TODO: Fix window resizing
 //the count of divisions for the velocity pane
 #define VELOCITY_V_COUNT 10
-//TODO: Figure out how to make this offset value work for all kinds of window sizes
-//An offset that sets the position of the bottom of the velocity pane
-//with respect to the main window
-#define VELOCITY_PANE_OFFSET 25
 
 //passed to callbacks, contains drawing area, rectangles to be drawn and pan/zoom amounts
 typedef struct context
@@ -18,8 +16,8 @@ typedef struct context
 	GtkDrawingArea* velocity_drawing_area;
 	int window_width; //width of the window
 	int window_height; //height of the window
-	int width; //width of the model
-	int height; //height of the model
+	int note_width; //width of the model
+	int note_height; //height of the model
 	int velocity_width; //width of velocity pane
 	int velocity_height; //height of velocity pane
 	int hcount; //horizontal grid divisions of the model
@@ -76,12 +74,17 @@ gboolean velocity_button(GtkWidget *widget, GdkEventButton  *event, gpointer   u
 	Context context = *((Context*)user_data);
 
 	//xform pointer coords to from screen to model coords
-	event->x-=context.pan_x;
 	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
 	float ratio = (float)slider_pos/(float)context.velocity_height;
+
+	event->y+=context.velocity_height;
+	event->x/=1;
+	event->y/=context.velocity_height/context.window_height;
+	event->y+=-context.velocity_height;
+	
+	event->x-=context.pan_x;
 	event->x/=context.zoom;
-	event->y+=VELOCITY_PANE_OFFSET;
-	event->y/=(1-ratio);
+	event->y/=1-ratio;
 
 	//left mouse button press
 	if (event->type==GDK_BUTTON_PRESS)
@@ -154,8 +157,8 @@ gboolean note_button(GtkWidget *widget, GdkEventButton  *event, gpointer   user_
 		printf("draw rectangle: (%f,%f)   (%f,%f)\n",rect.x1,rect.y1,rect.x2,rect.y2);
 
 		//compute width/height of each division of the screen into the grid
-		float w = ((float)context.width)/((float)context.hcount);
-		float h = ((float)context.height)/((float)context.vcount);
+		float w = ((float)context.note_width)/((float)context.hcount);
+		float h = ((float)context.note_height)/((float)context.vcount);
 
 		//snap the current rectangle to the grid points of the screen
 		snapped_rect_to_grid(&rect,w,h);
@@ -213,7 +216,7 @@ gboolean note_draw (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	cairo_scale(cr,context.zoom,context.zoom);
 
 	//draw coord lines and etc
-	draw_coords(cr,context.width,context.height,context.hcount,context.vcount);
+	draw_coords(cr,context.note_width,context.note_height,context.hcount,context.vcount);
 
 	//draw all rectangles to screen	
 	RectStack stk = *(context.rectangle_stack);
@@ -248,10 +251,24 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 	cairo_t * cr = gdk_drawing_context_get_cairo_context (drawingContext);
 
 	//Setup pan and zoom
+	//int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
+	//printf("DEBUG:velocity_draw()\n");
+	//printf("\tslider position %d\n",slider_pos);
+	//printf("\tvelocity height %d\n",context.velocity_height);
+	//printf("\twindow height %d\n",context.window_height);
+	//printf("\tmodel height %d\n",context.height);
+	//float ratio = (float)slider_pos/(float)context.velocity_height;
 	int slider_pos = gtk_paned_get_position(gtk_widget_get_parent(widget));
 	float ratio = (float)slider_pos/(float)context.velocity_height;
-	cairo_translate(cr,context.pan_x,-VELOCITY_PANE_OFFSET);
+
+	//scale velocity pane about point at bottom right edge
+	cairo_translate(cr,0,context.velocity_height);
+	cairo_scale(cr,1,context.velocity_height/context.window_height);
+	cairo_translate(cr,0,-context.velocity_height);
+
+	cairo_translate(cr,context.pan_x,0);
 	cairo_scale(cr,context.zoom,1-ratio);
+
 	//draw coord grid lines
 	draw_coords(cr,context.velocity_width,context.velocity_height,context.velocity_hcount,context.velocity_vcount);
 
@@ -281,6 +298,32 @@ gboolean velocity_draw(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 
 	return FALSE;
 }
+/*
+//callback on window resize
+void configure_callback(GtkWindow *window, GdkEvent *event, gpointer data) 
+{
+
+	Context context = *((Context*)data);
+	printf("Resize old height=%d, old width=%d\n",context.window_height,context.window_width);
+	int new_width = 0;
+	int new_height = 0;
+	gtk_window_get_size(window,&new_width,&new_height);
+	printf("Resize new height=%d, new width=%d\n",new_height,new_width);
+	//context.velocity_width=new_width;
+	//context.note_width=new_width;
+	//context.window_width=new_width;
+	//context.window_height=new_height;
+	//gtk_widget_set_size_request(context.velocity_drawing_area, new_width, new_height); //freezes computer
+	//gtk_drawing_area_set_content_width(&context.note_drawing_area,new_height);
+	//gtk_drawing_area_set_content_width(context.note_drawing_area,new_width);
+	//gtk_window_set_default_size(window, new_width, new_height);
+	//gtk_window_set_default_size(context.note_drawing_area, new_width, new_height);
+	///GtkWidget *vpaned = gtk_widget_get_parent(context.note_drawing_area);
+	//gtk_container_resize_children(vpaned);
+	gtk_drawing_area_set_content_width(&context.note_drawing_area,new_height);
+	return FALSE;
+}
+*/
 // ------------------------------------------------------------
 int main (int argc, char * argv[]) {
 	//variables about drawing area and rectangle stack
@@ -290,8 +333,8 @@ int main (int argc, char * argv[]) {
 						.velocity_drawing_area=NULL,
 						.window_width=1024,
 						.window_height=650,
-						.width=1024,
-						.height=650,
+						.note_width=1024,
+						.note_height=650,
 						.velocity_width=1024,
 						.velocity_height=650,
 						.hcount=24,
@@ -307,8 +350,8 @@ int main (int argc, char * argv[]) {
 		printf("USAGE: gtk-view <win-width> <win-width> <model-width> <model-height> <h-divs> <v-divs>\n");
 		printf("\t<win-width> the width of the window.\n");
 		printf("\t<win-height> the height of the window.\n");
-		printf("\t<model-width> the width of the model in the top pane.\n");
-		printf("\t<model-height> the height of the model in the top pane.\n");
+		printf("\t<note-width> the width of the note area in the top pane.\n");
+		printf("\t<note-height> the height of the note area in the top pane.\n");
 		printf("\t<h-divs> the number of horizontal divisions for the top pane.\n");
 		printf("\t<v-divs> the number of vertical divisions for the top pane.\n");
 		return 0;
@@ -317,10 +360,10 @@ int main (int argc, char * argv[]) {
 	{
 		context.window_width = atoi(argv[1]);
 		context.window_height = atoi(argv[2]);
-		context.width = atoi(argv[3]);
-		context.height = atoi(argv[4]);
+		context.note_width = atoi(argv[3]);
+		context.note_height = atoi(argv[4]);
 		context.velocity_width = atoi(argv[3]);
-		context.velocity_height = 650;
+		context.velocity_height = context.window_height;
 		context.hcount= atoi(argv[5]);
 		context.vcount = atoi(argv[6]);
 		context.velocity_hcount= atoi(argv[5]);
@@ -334,11 +377,13 @@ int main (int argc, char * argv[]) {
 	// window setup
 	GtkWindow * window; 
 	window = (GtkWindow*)gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(window, "Drawing");
+	gtk_window_set_title(window, "Piano Roll");
 	g_signal_connect(window, "destroy", gtk_main_quit, NULL);
 	gtk_container_set_border_width(GTK_CONTAINER(window),10);
 	gtk_widget_set_size_request(window,context.window_width,context.window_height);
 	gtk_widget_add_events(window, GDK_KEY_PRESS_MASK); //enable key press mask
+	//gtk_widget_add_events(window, GDK_CONFIGURE); //enable window move/resize
+	gtk_window_set_resizable(window, FALSE); //disable resizing for now
 
 	// create the note drawing area
 	GtkDrawingArea* noteDrawingArea;
@@ -353,8 +398,8 @@ int main (int argc, char * argv[]) {
 	
 	//pane widget setup
 	GtkWidget *vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-	gtk_paned_add1(GTK_PANED(vpaned),noteDrawingArea);
-	gtk_paned_add2(GTK_PANED(vpaned),velocityDrawingArea);
+	gtk_paned_pack1(GTK_PANED(vpaned),noteDrawingArea,TRUE,TRUE);
+	gtk_paned_pack2(GTK_PANED(vpaned),velocityDrawingArea,TRUE,TRUE);
 	gtk_paned_set_position(vpaned, context.window_height/2);
 	gtk_paned_set_wide_handle(vpaned, TRUE);
 	gtk_container_add(GTK_CONTAINER(window), vpaned);
@@ -382,6 +427,7 @@ int main (int argc, char * argv[]) {
 					"key-press-event",
 					G_CALLBACK(pan_zoom_key), 
 					&context); //set up button press signal
+	//g_signal_connect(G_OBJECT(window), "configure-event",G_CALLBACK(configure_callback), &context); //callback on window resize
 
 	gtk_widget_show_all ((GtkWidget*)window);
 	gtk_main();
