@@ -31,9 +31,9 @@ typedef enum { UNKNOWN, MIDI_EVENT, SYSEX_EVENT, META_EVENT } EventType;
 typedef struct midi_file_event
 {
 	EventType type;	
-	MidiEvent mevent;	
-	SysexEvent sevent;
-	MetaEvent mevent;
+	MidiEvent midi_event;	
+	SysexEvent sysex_event;
+	MetaEvent meta_event;
 } MidiFileEvent;
 
 typedef struct midi_track_event
@@ -49,12 +49,12 @@ typedef struct midi_header_chunk
 	uint16_t format; //always 0,1 or 2 (most significant byte first).
 	uint16_t ntrks; //the number of track chunks in the file, always 1 for format 0 files (MSB first).
 	uint16_t division; //see spec.
-} midiHeaderChunk;
+} MidiHeaderChunk;
 
 typedef struct midi_track_chunk
 {
 	uint8_t type[4]; //always the four ascii chars 'MTrk'.
 	uint32_t length; //length in bytes of event. (I THINK)
 	MidiTrackEvent* mtrk_event; //one or more midi track events.
-} midiTrackChunk
+} MidiTrackChunk;
 #endif

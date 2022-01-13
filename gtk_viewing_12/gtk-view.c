@@ -5,6 +5,7 @@
 //#include "draw_rectangles.h"
 #include "rectangle_stack.h"
 //TODO: Fix window resizing
+//TODO: Force velocity_width, window_width, note_width to all be the same size
 //the count of divisions for the velocity pane
 #define VELOCITY_V_COUNT 10
 

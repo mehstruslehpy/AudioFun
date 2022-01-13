@@ -1,4 +1,4 @@
-FILES := midi-out endian rectangle_stack
+FILES := midi-out midi_functions endian rectangle_stack
 CC := gcc
 MISC-CFLAGS := -g -Wall -pedantic -I /usr/include/cairo
 MISC-LFLAGS := -g -Wall -pedantic
@@ -10,7 +10,7 @@ GTK-LFLAGS = $(shell pkg-config --libs gtk+-3.0)
 main: $(FILES)
 	@echo "Building done"
 	@echo "Link: " $@
-	$(CC) $(MISC-LFLAGS) midi-out.o endian.o rectangle_stack.o -o midi-out $(GTK-LFLAGS) $(CAIRO-LFLAGS)
+	$(CC) $(MISC-LFLAGS) midi-out.o endian.o midi_functions.o rectangle_stack.o -o midi-out $(GTK-LFLAGS) $(CAIRO-LFLAGS)
 
 $(FILES):$@
 	@echo "Compiling: " $@
